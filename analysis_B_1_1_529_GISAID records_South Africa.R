@@ -717,6 +717,8 @@ ggplot(data=fit_southafrica_multi_preds_withCI,
 ggsave(file=paste0(".\\plots\\",plotdir,"\\cases per day_stacked area multinomial fit raw case data.png"), width=8, height=6)
 write.csv(fit_southafrica_multi_preds_withCI, file=paste0(".\\plots\\",plotdir,"\\cases per day by variant South Africa 6 dec 2021.csv"), row.names=F)
 
+
+write_csv(fit_southafrica_multi_preds_withCI[fit_southafrica_multi_preds_withCI$date<=today,], 'SA_DC_omicron.csv')
 ggplot(data=fit_southafrica_multi_preds_withCI[fit_southafrica_multi_preds_withCI$date<=today,], 
        aes(x=date, y=smoothed_cases, group=variant)) + 
   geom_area(aes(lwd=I(1.2), colour=NULL, fill=variant, group=variant), position="stack") +
@@ -729,6 +731,29 @@ ggplot(data=fit_southafrica_multi_preds_withCI[fit_southafrica_multi_preds_withC
 ggsave(file=paste0(".\\plots\\",plotdir,"\\cases per day_smoothed_stacked area multinomial fit case data.png"), width=8, height=6)
 
 
+df <- read_csv('SA_DC_omicron.csv')
+df <- df[order(df$date), ]
+df$cases_7_dma <- NA
+
+
+df$cases_7_dma <- ave(df$cases, df$variant, FUN = function(x){ 
+  temp <- x
+  for(i in 1:length(x)){
+    temp[i] <- mean(x[max(c(1, (i-3))):min(c(i+3, length(x)))])
+  }
+  temp})
+
+
+ggplot(data=df, 
+       aes(x=date, y=cases_7_dma, group=variant)) + 
+  geom_area(aes(lwd=I(1.2), colour=NULL, fill=variant, group=variant), position="stack") +
+  xaxis +
+  theme_hc() + theme(legend.position="right") + 
+  ylab("New confirmed cases per day (smoothed)") + xlab("Date of diagnosis") +
+  ggtitle("NEW CONFIRMED SARS-CoV2 CASES PER DAY BY VARIANT\nIN SOUTH AFRICA\n(case data NICD & multinomial fit to GISAID data)") +
+  scale_fill_manual("variant", values=lineage_cols2) +
+  scale_colour_manual("variant", values=lineage_cols2)
+ggsave(file=paste0(".\\plots\\",plotdir,"\\cases per day_smoothed_stacked area multinomial fit case data.png"), width=8, height=6)
 
 
 
